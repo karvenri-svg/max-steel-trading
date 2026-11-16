@@ -12,6 +12,12 @@ log = logging.getLogger(__name__)
 API = "https://api.telegram.org/bot{token}/{metodo}"
 
 
+class TelegramError(Exception):
+    def __init__(self, codigo: int, descripcion: str) -> None:
+        super().__init__(f"Telegram {codigo}: {descripcion}")
+        self.codigo = codigo
+
+
 class Telegram:
     def __init__(self, http: httpx.Client | None = None) -> None:
         self.cfg = get_settings()
@@ -31,6 +37,30 @@ class Telegram:
             return (True, None) if j.get("ok") else (False, j.get("description", r.text[:200]))
         except (httpx.HTTPError, ValueError) as e:
             return False, str(e)
+
+    # ------------------------------------------------ recepción (bot)
+    def actualizaciones(self, offset: int | None, espera: int = 25) -> list[dict]:
+        """Long polling con getUpdates. Lanza TelegramError si la API responde con error."""
+        r = self.http.post(
+            API.format(token=self.cfg.telegram_bot_token, metodo="getUpdates"),
+            json={"offset": offset, "timeout": espera, "allowed_updates": ["message"]},
+            timeout=espera + 15)
+        j = r.json()
+        if not j.get("ok"):
+            raise TelegramError(r.status_code, j.get("description", ""))
+        return j.get("result", [])
+
+    def descargar_archivo(self, file_id: str) -> tuple[bytes, str]:
+        """Descarga un archivo enviado al bot. Devuelve (bytes, ruta_en_telegram)."""
+        r = self.http.post(API.format(token=self.cfg.telegram_bot_token, metodo="getFile"),
+                           json={"file_id": file_id})
+        j = r.json()
+        if not j.get("ok"):
+            raise TelegramError(r.status_code, j.get("description", ""))
+        ruta = j["result"]["file_path"]
+        datos = self.http.get(
+            f"https://api.telegram.org/file/bot{self.cfg.telegram_bot_token}/{ruta}").content
+        return datos, ruta
 
     def mensaje(self, texto: str) -> tuple[bool, str | None]:
         return self._llamar("sendMessage", {"text": texto, "parse_mode": "HTML",

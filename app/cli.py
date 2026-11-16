@@ -1,7 +1,8 @@
 """Línea de comandos.
 
     python -m app.cli init        # crea la base de datos
-    python -m app.cli servidor    # panel web + tareas programadas
+    python -m app.cli servidor    # panel web + tareas programadas + bot de Telegram
+    python -m app.cli bot         # solo el bot de Telegram (sin panel)
     python -m app.cli buscar      # un ciclo de búsqueda ahora
     python -m app.cli metricas    # imprime las métricas
     python -m app.cli demo        # carga datos de ejemplo (para probar el panel)
@@ -19,6 +20,18 @@ from app.db import init_db, session_scope
 def cmd_servidor(a):
     import uvicorn
     uvicorn.run("app.web.main:app", host=a.host, port=a.port, reload=False)
+
+
+def cmd_bot(_):
+    import threading
+
+    from app.notifications.bot import BotTelegram
+    init_db()
+    print("Bot de Telegram escuchando. Ctrl+C para salir.")
+    try:
+        BotTelegram().bucle(threading.Event())
+    except KeyboardInterrupt:
+        pass
 
 
 def cmd_buscar(_):
@@ -84,6 +97,7 @@ def main():
     sv.add_argument("--port", type=int, default=8000)
     sv.set_defaults(f=cmd_servidor)
     sub.add_parser("buscar").set_defaults(f=cmd_buscar)
+    sub.add_parser("bot").set_defaults(f=cmd_bot)
     sub.add_parser("metricas").set_defaults(f=cmd_metricas)
     sub.add_parser("demo").set_defaults(f=cmd_demo)
     a = p.parse_args()

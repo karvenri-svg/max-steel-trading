@@ -263,3 +263,25 @@ class RegistroAgente(Base):
     accion: Mapped[str] = mapped_column(String(100))
     detalle: Mapped[str | None] = mapped_column(Text)
     fecha: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), default=ahora)
+
+
+class CapturaTelegram(Base):
+    """Publicación en preparación, enviada desde Telegram (una activa por chat)."""
+    __tablename__ = "capturas_telegram"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    chat_id: Mapped[str] = mapped_column(String(50), index=True)
+    url: Mapped[str | None] = mapped_column(String(600))
+    titulo: Mapped[str | None] = mapped_column(String(300))
+    descripcion: Mapped[str | None] = mapped_column(Text)
+    precio: Mapped[float | None] = mapped_column(Float)
+    ubicacion: Mapped[str | None] = mapped_column(String(200))
+    vendedor: Mapped[str | None] = mapped_column(String(200))
+    fotos: Mapped[str | None] = mapped_column(Text)  # nombres de archivo separados por coma
+    activa: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    oportunidad_id: Mapped[int | None] = mapped_column(ForeignKey("oportunidades.id"))
+    creada: Mapped[datetime] = mapped_column(DateTime, default=ahora)
+
+    @property
+    def lista_fotos(self) -> list[str]:
+        return [f for f in (self.fotos or "").split(",") if f]

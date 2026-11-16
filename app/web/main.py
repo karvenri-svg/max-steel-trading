@@ -50,13 +50,17 @@ def autenticar(cred: HTTPBasicCredentials | None = Depends(seguridad)) -> None:
 async def lifespan(app: FastAPI):
     cfg.upload_dir.mkdir(parents=True, exist_ok=True)
     init_db()
-    sch = None
+    sch = bot = None
     if app.state.programador:
         from app import scheduler
+        from app.notifications.bot import iniciar_en_hilo
         sch = scheduler.iniciar()
+        bot = iniciar_en_hilo()  # escucha tus mensajes de Telegram (si está configurado)
     yield
     if sch:
         sch.shutdown(wait=False)
+    if bot:
+        bot[1].set()
 
 
 def crear_app(programador: bool = True) -> FastAPI:

@@ -48,7 +48,7 @@ inventario, prepara publicaciones de venta y calcula tus ganancias.
 | Agente 4 Vendedor | `app/agents/vendedor.py`, `app/agents/contacto.py` |
 | Agente 5 Analista | `app/agents/analista.py` |
 | Fuentes (APIs oficiales) | `app/sources/ebay.py`, `app/sources/mercadolibre.py` |
-| Telegram | `app/notifications/telegram.py` |
+| Telegram (alertas y bot de captura) | `app/notifications/telegram.py`, `app/notifications/bot.py` |
 | Tareas programadas | `app/scheduler.py` |
 | Panel web + API JSON | `app/web/main.py`, `app/web/templates/` |
 | Pruebas | `tests/` |
@@ -133,6 +133,11 @@ python -m app.cli metricas
 ```
 
 ```bash
+python -m app.cli bot
+```
+(solo el bot de Telegram, sin panel; no lo uses al mismo tiempo que `servidor`)
+
+```bash
 python -m pytest -q
 ```
 
@@ -185,6 +190,45 @@ Todo va en el archivo `.env` (nunca lo compartas ni lo subas a git).
 7. Al cerrar la venta: **Registrar venta** (con la casilla de confirmación). Esa venta alimenta
    los precios de mercado y las recomendaciones del Analista.
 
+### Capturar publicaciones de Facebook desde el teléfono (bot de Telegram)
+
+El mismo bot que te manda las alertas también recibe publicaciones. Se activa solo cuando
+`TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` están configurados y el servidor está corriendo
+(o con `python -m app.cli bot` si no quieres el panel).
+
+1. En Facebook, pulsa **Compartir → Copiar enlace** (o comparte directo a Telegram) y
+   mándaselo a tu bot.
+2. Opcional: manda **capturas de pantalla** de la publicación (hasta 4). Si Claude está
+   activo, lee de ellas el precio, el título, la ubicación y el vendedor.
+3. Manda el **precio** (solo el número, p. ej. `350`) y luego **/evaluar**.
+
+El bot responde con la puntuación, el valor de reventa estimado y la ganancia potencial,
+y la oportunidad queda en el panel. Atajo en un solo mensaje:
+
+```
+/fb https://www.facebook.com/marketplace/item/123456/ 350 Ozaru Dragon Ball GT
+```
+
+| Comando | Qué hace |
+|---|---|
+| `/fb enlace precio título` | Registra y evalúa al instante |
+| `/evaluar` | Evalúa la publicación en preparación |
+| `/precio 350` | Fija el precio (también basta con mandar `350`) |
+| `/estado` | Muestra lo que lleva capturado y lo que falta |
+| `/cancelar` | Descarta la publicación en preparación |
+| `/resumen` | Inventario, ventas y oportunidades pendientes |
+| `/ayuda` | Instrucciones |
+
+Detalles:
+- **Solo te responde a ti:** ignora mensajes de cualquier chat distinto de `TELEGRAM_CHAT_ID`.
+- **No abre Facebook:** usa únicamente lo que tú le mandas (enlace, texto y capturas).
+- Los enlaces se limpian de parámetros de rastreo; si mandas dos veces la misma publicación
+  de Marketplace, te avisa que ya estaba registrada.
+- Usa *long polling*, así que funciona en tu computadora sin abrir puertos. **Corre un solo
+  proceso del bot** (o `servidor` o `bot`, no ambos); si no, Telegram responde "409 Conflict".
+  Si alguna vez configuraste un webhook para ese bot, bórralo visitando
+  `https://api.telegram.org/bot<TOKEN>/deleteWebhook`.
+
 ---
 
 ## 5. Seguridad y cumplimiento
@@ -211,8 +255,7 @@ Todo va en el archivo `.env` (nunca lo compartas ni lo subas a git).
 - **eBay:** la API Browse da precios publicados, no vendidos (el historial de vendidos
   requiere la Marketplace Insights API, de acceso restringido). Por eso tus ventas propias y
   los precios que registres son la fuente más fiable.
-- **Facebook:** captura manual. Una mejora cómoda: un comando del bot de Telegram para
-  reenviar enlaces y fotos desde el teléfono.
+- **Facebook:** captura manual desde el panel o desde el bot de Telegram (no hay API pública).
 - **Valoración:** mejora con datos. Registra cada venta y algunos precios de referencia.
 - **Despliegue:** para correr 24/7, usa un VPS pequeño o una Raspberry Pi con
   `python -m app.cli servidor --host 0.0.0.0` como servicio `systemd`, detrás de HTTPS.
