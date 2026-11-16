@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% from "_score.html" import score %}{% block titulo %}Oportunidad{% endblock %}
+{% block contenido %}
+<h1>{{ score(op.puntuacion) }} {{ op.modelo_identificado or op.titulo }}</h1>
+<div class="cards"><div class="card op">{% if op.foto_url %}<img src="{{ foto_src(op.foto_url) }}" alt="">{% endif %}
+<p><b>{{ op.titulo }}</b></p>
+<p>Precio: <b>{{ op.precio|dinero }}</b> {{ op.moneda }}{% if op.envio %} + envío {{ op.envio|dinero }}{% endif %}<br>
+Reventa estimada: {{ op.valor_reventa|dinero }}<br>Ganancia potencial: <b class="{{ 'pos' if (op.ganancia or 0)>0 else 'neg' }}">{{ op.ganancia|dinero }}</b>{% if op.margen_pct is not none %} ({{ op.margen_pct }}%){% endif %}<br>
+Estado físico: {{ op.estado_fisico }} · Riesgo de réplica: {{ ((op.riesgo_replica or 0)*100)|round|int }}%<br>
+Ubicación: {{ op.ubicacion or '—' }} · Vendedor: {{ op.vendedor or '—' }}<br>
+Plataforma: {{ op.plataforma }} · Evaluada con: {{ op.evaluada_con }} · Estado: <span class="tag">{{ op.estado.value }}</span></p>
+<a class="btn" href="{{ op.url }}" target="_blank" rel="noopener">Abrir publicación original ↗</a></div>
+<div class="card"><h2 style="margin-top:0">Análisis</h2><pre>{{ op.razonamiento }}</pre>
+{% if op.descripcion %}<details><summary>Descripción original</summary><pre>{{ op.descripcion }}</pre></details>{% endif %}</div></div>
+
+<h2>Acciones</h2>
+<div class="note">El sistema <b>nunca compra, paga ni escribe al vendedor</b>. Prepara un borrador; tú decides y lo envías.</div>
+<div class="cards" style="margin-top:12px">
+<div class="card"><form method="post" action="/oportunidades/{{ op.id }}/accion">
+<button name="accion" value="interesa" class="sec">Me interesa</button>
+<button name="accion" value="reevaluar" class="sec">Reevaluar</button>
+<button name="accion" value="descartar" class="bad">Descartar</button></form></div>
+<div class="card"><form method="post" action="/oportunidades/{{ op.id }}/accion"><b>Mensaje al vendedor</b>
+<label>Oferta opcional ({{ moneda }})</label><input name="oferta"><button name="accion" value="mensaje" class="sec">Preparar borrador</button>
+{% if op.mensaje_vendedor %}<pre>{{ op.mensaje_vendedor }}</pre>
+{% if op.estado.value != 'contacto_aprobado' %}<button name="accion" value="aprobar_contacto">Autorizo contactar (lo envío yo)</button>{% else %}<p class="pos small">Contacto autorizado. Copia el texto y envíalo desde la plataforma.</p>{% endif %}{% endif %}
+</form></div>
+<div class="card"><form method="post" action="/oportunidades/{{ op.id }}/comprada" enctype="multipart/form-data"><b>Ya la compré (yo)</b>
+<label>Costo real pagado (con envío)</label><input name="costo" value="{{ (op.precio + (op.envio or 0))|round|int }}" required>
+<label>Foto propia (opcional)</label><input type="file" name="foto" accept="image/*">
+<button>Registrar en inventario</button></form></div></div>
+{% endblock %}

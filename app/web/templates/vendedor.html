@@ -1,0 +1,44 @@
+{% extends "base.html" %}{% block titulo %}Vendedor{% endblock %}{% block contenido %}
+<h1>Agente Vendedor</h1>
+<div class="note">Todo lo que genera el Vendedor es un <b>borrador</b>. Tú lo apruebas y lo publicas en el grupo. Los grupos de Facebook solo admiten publicaciones de <b>Max Steel</b> y deben estar marcados como autorizados.</div>
+
+<h2>Canales y grupos</h2>
+<table><tr><th>Nombre</th><th>Tipo</th><th>Tema</th><th>Reglas</th><th>Autorizado</th></tr>
+{% for c in canales %}<tr><td>{% if c.url %}<a href="{{ c.url }}" target="_blank" rel="noopener">{{ c.nombre }}</a>{% else %}{{ c.nombre }}{% endif %}</td><td>{{ c.tipo }}</td><td>{{ c.tema }}</td><td class="small">{{ c.reglas or '' }}</td>
+<td><form class="inline" method="post" action="/vendedor/canales/{{ c.id }}/autorizar"><input type="hidden" name="autorizado" value="{{ '' if c.autorizado else 'si' }}"><button class="{{ 'sec' if c.autorizado else '' }}">{{ '✅ Sí (quitar)' if c.autorizado else 'Autorizar' }}</button></form></td></tr>
+{% else %}<tr><td colspan="5" class="muted">Agrega los grupos de Max Steel donde eres miembro.</td></tr>{% endfor %}</table>
+<details class="card" style="margin-top:10px"><summary>➕ Agregar canal</summary><form method="post" action="/vendedor/canales">
+<div class="row"><div><label>Nombre *</label><input name="nombre" required></div><div><label>URL</label><input name="url"></div>
+<div><label>Tipo</label><select name="tipo"><option value="grupo_facebook">Grupo de Facebook</option><option value="mercadolibre">Mercado Libre</option><option value="ebay">eBay</option><option value="otro">Otro</option></select></div>
+<div><label>Tema</label><select name="tema"><option value="max_steel">Max Steel</option><option value="dragon_ball">Dragon Ball</option><option value="general">General</option></select></div></div>
+<label>Reglas del grupo (pegar)</label><textarea name="reglas"></textarea>
+<label><input type="checkbox" name="autorizado" value="si"> Soy miembro y las reglas permiten publicar ventas</label><button>Guardar</button></form></details>
+
+<h2>Crear publicación / paquete</h2>
+<div class="card"><form method="post" action="/vendedor/publicaciones"><label>Figuras (Ctrl/Cmd para varias = paquete)</label>
+<select name="productos" multiple size="6" required>{% for p in disponibles %}<option value="{{ p.id }}">{{ p.codigo }} · {{ p.nombre }} ({{ p.linea }}) — {{ p.precio_recomendado|dinero }}</option>{% endfor %}</select>
+<div class="row"><div><label>Canal</label><select name="canal_id"><option value="">General</option>{% for c in canales if c.autorizado %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select></div>
+<div><label>Precio (vacío = recomendado)</label><input name="precio"></div></div><button>Generar borrador</button></form></div>
+
+<h2>Publicaciones</h2>
+{% for pub in publicaciones %}<div class="card" id="pub{{ pub.id }}" style="margin-bottom:10px"><b>{{ pub.titulo }}</b> <span class="tag">{{ pub.estado }}</span>
+<span class="small muted">· {{ pub.canal.nombre if pub.canal else 'general' }} · {{ pub.precio|dinero }}</span>
+<pre>{{ pub.titulo }}
+
+{{ pub.descripcion }}</pre>
+<form class="inline" method="post" action="/vendedor/publicaciones/{{ pub.id }}/estado">
+<button name="estado" value="aprobada" class="sec">Aprobar</button><button name="estado" value="publicada" class="sec">Ya la publiqué</button><button name="estado" value="descartada" class="bad">Descartar</button></form>
+{% if pub.canal and pub.canal.url %}<a class="btn sec" href="{{ pub.canal.url }}" target="_blank" rel="noopener">Abrir grupo ↗</a>{% endif %}</div>
+{% else %}<p class="muted">Sin publicaciones.</p>{% endfor %}
+
+<h2>Promociones recomendadas</h2>
+<table><tr><th>Producto</th><th>Días en inventario</th><th>Precio promoción</th></tr>
+{% for r in promociones %}<tr><td><a href="/inventario/{{ r.producto.id }}">{{ r.producto.codigo }} {{ r.producto.nombre }}</a></td><td>{{ r.dias }}</td><td>{{ r.precio_promocion|dinero }}</td></tr>
+{% else %}<tr><td colspan="3" class="muted">Nada con más de 60 días.</td></tr>{% endfor %}</table>
+
+<h2>Paquetes sugeridos</h2>
+{% for pq in paquetes %}<div class="card" style="margin-bottom:8px"><b>{{ pq.linea }}:</b> {% for p in pq.productos %}{{ p.codigo }} {{ p.nombre }}{{ ', ' if not loop.last }}{% endfor %}
+— <b>{{ pq.precio|dinero }}</b> <span class="small muted">(ahorro {{ pq.ahorro|dinero }})</span>
+<form class="inline" method="post" action="/vendedor/publicaciones">{% for p in pq.productos %}<input type="hidden" name="productos" value="{{ p.id }}">{% endfor %}<input type="hidden" name="precio" value="{{ pq.precio }}"><button class="sec">Crear borrador</button></form></div>
+{% else %}<p class="muted">Necesitas al menos 2 figuras disponibles de la misma línea.</p>{% endfor %}
+{% endblock %}

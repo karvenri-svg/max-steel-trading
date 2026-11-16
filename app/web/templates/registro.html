@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block titulo %}Registro{% endblock %}{% block contenido %}
+<h1>Registro de actividad de los agentes</h1>
+<table><tr><th>Fecha</th><th>Agente</th><th>Acción</th><th>Detalle</th></tr>{% for f in filas %}<tr><td class="small">{{ f.fecha.strftime('%d/%m %H:%M:%S') if f.fecha }}</td><td>{{ f.agente }}</td><td>{{ f.accion }}</td><td class="small">{{ f.detalle }}</td></tr>{% endfor %}</table>
+{% endblock %}

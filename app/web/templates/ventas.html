@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block titulo %}Ventas{% endblock %}{% block contenido %}
+<h1>Ventas</h1>
+<div class="grid"><div class="card stat"><div class="v">{{ m.ventas_realizadas }}</div><div class="l">Ventas</div></div>
+<div class="card stat"><div class="v">{{ m.ingresos|dinero }}</div><div class="l">Ingresos</div></div>
+<div class="card stat"><div class="v">{{ m.ganancias_realizadas|dinero }}</div><div class="l">Utilidad neta</div></div>
+<div class="card stat"><div class="v">{{ m.margen_utilidad_pct }}%</div><div class="l">Margen sobre costo</div></div></div><br>
+<table><tr><th>Fecha</th><th>Producto</th><th>Canal</th><th>Precio</th><th>Comisión</th><th>Envío</th><th>Costo</th><th>Utilidad</th></tr>
+{% for v in ventas %}<tr><td>{{ v.fecha }}</td><td><a href="/inventario/{{ v.producto_id }}">{{ v.producto.codigo }} {{ v.producto.nombre }}</a></td><td>{{ v.canal or '' }}</td>
+<td>{{ v.precio_venta|dinero }}</td><td>{{ v.comision|dinero }}</td><td>{{ v.envio|dinero }}</td><td>{{ v.producto.costo_adquisicion|dinero }}</td>
+<td class="{{ 'pos' if v.utilidad>0 else 'neg' }}">{{ v.utilidad|dinero }}</td></tr>{% else %}<tr><td colspan="8" class="muted">Sin ventas.</td></tr>{% endfor %}</table>
+<h2>Rendimiento por modelo</h2><table><tr><th>Modelo</th><th>Ventas</th><th>Utilidad promedio</th><th>Días promedio para vender</th></tr>
+{% for r in modelos %}<tr><td>{{ r.modelo }}</td><td>{{ r.ventas }}</td><td>{{ r.utilidad_promedio|dinero }}</td><td>{{ r.dias_promedio_venta if r.dias_promedio_venta is not none else '—' }}</td></tr>{% endfor %}</table>
+{% endblock %}

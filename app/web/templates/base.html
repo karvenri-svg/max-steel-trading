@@ -1,0 +1,9 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block titulo %}Panel{% endblock %} · Max Steel Trading</title><link rel="stylesheet" href="/static/style.css"></head>
+<body><header><b>🦾 Max Steel Trading</b>
+<a href="/">Panel</a><a href="/oportunidades">Oportunidades</a><a href="/inventario">Inventario</a>
+<a href="/ventas">Ventas</a><a href="/vendedor">Vendedor</a><a href="/prospectos">Prospectos</a>
+<a href="/configuracion">Configuración</a><a href="/registro">Registro</a>
+<span class="badge-ia">{{ "IA: Claude activo" if ia_activa else "IA: modo reglas" }}</span></header>
+<main>{% if msg %}<div class="flash">{{ msg }}</div>{% endif %}{% if error %}<div class="flash err">{{ error }}</div>{% endif %}
+{% block contenido %}{% endblock %}</main></body></html>

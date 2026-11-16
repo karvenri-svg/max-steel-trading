@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% block titulo %}Configuración{% endblock %}{% block contenido %}
+<h1>Configuración</h1>
+<div class="cards"><div class="card"><h2 style="margin-top:0">Negocio</h2><form method="post" action="/configuracion/negocio">
+<label>Presupuesto máximo por compra ({{ moneda }})</label><input name="presupuesto" value="{{ presupuesto|int }}">
+<label>Puntuación mínima para alertar (0-100)</label><input name="minima" type="number" min="0" max="100" value="{{ minima }}"><button>Guardar</button></form>
+<p class="small muted">Comisión de venta {{ (cfg.comision_venta*100)|round(1) }}% · envío {{ cfg.costo_envio|dinero }} · búsqueda cada {{ cfg.intervalo_busqueda_min }} min (en .env)</p></div>
+<div class="card"><h2 style="margin-top:0">Integraciones</h2><ul>
+<li>Claude: {{ "activo (" ~ cfg.claude_model ~ ")" if cfg.ia_activa else "falta ANTHROPIC_API_KEY" }}</li>
+<li>Telegram: {{ "activo" if cfg.telegram_activo else "falta TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID" }}</li>
+{% for k,v in fuentes.items() %}<li>{{ k }}: {{ v }}</li>{% endfor %}</ul>
+<form method="post" action="/configuracion/telegram/prueba"><button class="sec">Enviar mensaje de prueba a Telegram</button></form></div></div>
+
+<h2>Búsquedas</h2><div class="card">{% for b in busquedas %}<form class="inline" method="post" action="/configuracion/busquedas/{{ b.id }}/alternar"><button class="{{ '' if b.activa else 'sec' }}">{{ '✅' if b.activa else '⏸' }} {{ b.termino }}</button></form> {% endfor %}
+<form method="post" action="/configuracion/busquedas" class="row"><div><input name="termino" placeholder="Nuevo término" required></div><div><button>Agregar</button></div></form></div>
+
+<h2>Catálogo de modelos</h2>
+<p class="small muted">El <b>valor de referencia</b> lo defines tú (no se inventan precios). Se usa cuando aún no hay ventas ni comparables.</p>
+<table><tr><th>Modelo</th><th>Línea</th><th>Año</th><th>Palabras clave</th><th>Valor ref.</th></tr>
+{% for c in catalogo %}<tr><td>{{ c.nombre }}</td><td>{{ c.linea }}</td><td>{{ c.anio or '' }}</td><td class="small">{{ c.palabras_clave }}</td><td>{{ c.valor_referencia|dinero }}</td></tr>{% endfor %}</table>
+<details class="card" style="margin-top:8px"><summary>Agregar / editar modelo (mismo nombre = editar)</summary><form method="post" action="/configuracion/catalogo">
+<div class="row"><div><label>Nombre *</label><input name="nombre" list="cat" required><datalist id="cat">{% for c in catalogo %}<option value="{{ c.nombre }}">{% endfor %}</datalist></div>
+<div><label>Línea</label><select name="linea"><option>Max Steel</option><option>Dragon Ball</option></select></div><div><label>Año</label><input name="anio"></div>
+<div><label>Valor de referencia</label><input name="valor_referencia"></div></div>
+<label>Palabras clave (separadas por coma) *</label><input name="palabras_clave" required><label>Notas de autenticidad</label><textarea name="notas_autenticidad"></textarea><button>Guardar</button></form></details>
+
+<h2>Precios de referencia (comparables)</h2>
+<form method="post" action="/configuracion/precios" class="card"><div class="row"><div><label>Modelo (nombre del catálogo)</label><input name="modelo" list="cat" required></div>
+<div><label>Precio</label><input name="precio" required></div><div><label>Fuente</label><input name="fuente" value="manual"></div>
+<div><label><input type="checkbox" name="vendido" value="si"> Precio de venta real</label></div></div><button>Agregar</button></form><br>
+<table><tr><th>Fecha</th><th>Modelo</th><th>Precio</th><th>Fuente</th><th>Tipo</th></tr>{% for p in precios %}<tr><td class="small">{{ p.fecha.strftime('%d/%m/%Y') }}</td><td>{{ p.modelo }}</td><td>{{ p.precio|dinero }}</td><td>{{ p.fuente }}</td><td>{{ 'vendido' if p.vendido else 'publicado' }}</td></tr>{% endfor %}</table>
+{% endblock %}

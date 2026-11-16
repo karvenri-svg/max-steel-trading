@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% from "_producto_form.html" import campos %}{% block titulo %}Inventario{% endblock %}
+{% block contenido %}
+<h1>Inventario</h1>
+<form method="get" class="row"><div><label>Buscar</label><input name="q" value="{{ q }}"></div>
+<div><label>Estado</label><select name="estado" onchange="this.form.submit()"><option value="">Todos</option>
+{% for e in ["disponible","reservado","vendido"] %}<option {{ 'selected' if estado==e }}>{{ e }}</option>{% endfor %}</select></div></form>
+<br><table><tr><th></th><th>ID</th><th>Nombre</th><th>Modelo / año</th><th>Estado físico</th><th>Costo</th><th>Mínimo</th><th>Recomendado</th><th>Compra</th><th>Estado</th></tr>
+{% for p in productos %}<tr><td>{% if p.foto %}<img class="thumb-s" src="{{ foto_src(p.foto) }}" alt="">{% endif %}</td>
+<td><a href="/inventario/{{ p.id }}">{{ p.codigo }}</a></td><td>{{ p.nombre }}<br><span class="small muted">{{ p.accesorios or '' }}</span></td>
+<td>{{ p.modelo or '—' }}{% if p.anio %} · {{ p.anio }}{% endif %}</td><td>{{ p.estado_fisico.value }}</td>
+<td>{{ p.costo_adquisicion|dinero }}</td><td>{{ p.precio_minimo|dinero }}</td><td>{{ p.precio_recomendado|dinero }}</td>
+<td class="small">{{ p.fecha_compra or '' }}</td><td><span class="tag">{{ p.estado.value }}</span></td></tr>
+{% else %}<tr><td colspan="10" class="muted">Inventario vacío.</td></tr>{% endfor %}</table>
+<h2>Agregar figura</h2>
+<div class="card"><form method="post" action="/inventario" enctype="multipart/form-data">{{ campos(None, catalogo) }}<button>Guardar</button></form></div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block titulo %}Prospectos{% endblock %}{% block contenido %}
+<h1>Prospectos (clientes interesados)</h1>
+<div class="note">Solo registra personas que <b>te escribieron</b> o <b>aceptaron</b> ser contactadas. El sistema no envía mensajes: prepara borradores que tú apruebas y envías.</div>
+{% if seguimientos %}<h2>Seguimientos pendientes</h2><ul>{% for p in seguimientos %}<li><a href="/prospectos/{{ p.id }}">{{ p.nombre }}</a> — {{ p.proximo_seguimiento }}</li>{% endfor %}</ul>{% endif %}
+<h2>Lista</h2><table><tr><th>Nombre</th><th>Contacto</th><th>Origen</th><th>Intereses</th><th>Estado</th><th>Seguimiento</th></tr>
+{% for p in prospectos %}<tr><td><a href="/prospectos/{{ p.id }}">{{ p.nombre }}</a></td><td>{{ p.contacto or '' }}</td><td>{{ p.origen or '' }}</td><td class="small">{{ p.intereses or '' }}</td><td><span class="tag">{{ p.estado.value }}</span></td><td>{{ p.proximo_seguimiento or '' }}</td></tr>
+{% else %}<tr><td colspan="6" class="muted">Sin prospectos.</td></tr>{% endfor %}</table>
+<h2>Nuevo prospecto</h2><div class="card"><form method="post" action="/prospectos">
+<div class="row"><div><label>Nombre *</label><input name="nombre" required></div><div><label>Contacto (perfil, teléfono…)</label><input name="contacto"></div>
+<div><label>Origen (p. ej. comentario en grupo X)</label><input name="origen"></div></div>
+<label>Intereses</label><input name="intereses" placeholder="Max Steel 2000, Ozaru…">
+<label><input type="checkbox" name="consentimiento" value="si"> Esta persona me contactó o aceptó que la contacte</label><button>Guardar</button></form></div>
+{% endblock %}

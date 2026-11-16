@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% from "_producto_form.html" import campos %}{% block titulo %}{{ p.codigo }}{% endblock %}
+{% block contenido %}
+<h1>{{ p.codigo }} · {{ p.nombre }} <span class="tag">{{ p.estado.value }}</span></h1>
+<div class="cards"><div class="card">{% if p.foto %}<img class="thumb" src="{{ foto_src(p.foto) }}" alt="">{% else %}<p class="muted">Sin foto</p>{% endif %}
+<p>Costo: <b>{{ p.costo_adquisicion|dinero }}</b> · Mínimo: {{ p.precio_minimo|dinero }} · Recomendado: {{ p.precio_recomendado|dinero }}</p>
+{% for v in p.ventas %}<p class="pos">Vendido el {{ v.fecha }} en {{ v.precio_venta|dinero }} — utilidad {{ v.utilidad|dinero }}</p>{% endfor %}</div>
+<div class="card"><h2 style="margin-top:0">💡 Precio sugerido por el Vendedor</h2>
+<p><b>{{ rec.precio|dinero }}</b> {{ moneda }}</p><p class="small muted">{{ rec.motivo }}</p>
+<p class="small">Canales sugeridos: {% for c in sugeridos %}<span class="tag">{{ c.nombre }}</span> {% else %}<span class="muted">configura canales autorizados en Vendedor</span>{% endfor %}</p>
+{% if p.estado.value=='disponible' %}<form method="post" action="/vendedor/publicaciones"><input type="hidden" name="productos" value="{{ p.id }}">
+<label>Canal</label><select name="canal_id"><option value="">General (sin canal)</option>{% for c in canales %}<option value="{{ c.id }}">{{ c.nombre }} ({{ c.tipo }})</option>{% endfor %}</select>
+<label>Precio</label><input name="precio" value="{{ rec.precio|int }}"><button>Crear borrador de publicación</button></form>{% endif %}</div>
+
+<div class="card"><h2 style="margin-top:0">Estado</h2>
+<form method="post" action="/inventario/{{ p.id }}/estado">{% for e in ["disponible","reservado"] %}<button name="estado" value="{{ e }}" class="sec">{{ e|capitalize }}</button> {% endfor %}</form>
+{% if p.estado.value!='vendido' %}<h2>Registrar venta</h2><form method="post" action="/inventario/{{ p.id }}/venta">
+<div class="row"><div><label>Precio de venta *</label><input name="precio" required></div>
+<div><label>Canal</label><select name="canal"><option value="facebook">Facebook</option><option value="mercadolibre">Mercado Libre</option><option value="ebay">eBay</option><option value="directo">Directo</option></select></div>
+<div><label>Comisión (auto si vacío)</label><input name="comision"></div><div><label>Envío pagado por ti</label><input name="envio" value="0"></div></div>
+<label>Cliente</label><select name="prospecto_id"><option value="">—</option>{% for pr in prospectos %}<option value="{{ pr.id }}">{{ pr.nombre }}</option>{% endfor %}</select>
+<label><input type="checkbox" name="confirmo" value="si"> Confirmo que yo cerré esta venta</label><button>Registrar venta</button></form>{% endif %}</div></div>
+
+<h2>Editar</h2><div class="card"><form method="post" action="/inventario/{{ p.id }}/editar" enctype="multipart/form-data">{{ campos(p, catalogo) }}<button>Guardar cambios</button></form></div>
+{% endblock %}

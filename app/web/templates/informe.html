@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block contenido %}
+<h1>Informe del Analista</h1><div class="card"><p>{{ inf.resumen }}</p>
+<h2>Qué comprar</h2><ul>{% for x in inf.que_comprar %}<li>{{ x }}</li>{% endfor %}</ul>
+<h2>Qué vender</h2><ul>{% for x in inf.que_vender %}<li>{{ x }}</li>{% endfor %}</ul>
+<h2>Riesgos</h2><ul>{% for x in inf.riesgos %}<li>{{ x }}</li>{% endfor %}</ul></div>
+<a class="btn sec" href="/">Volver</a>{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% block titulo %}{{ p.nombre }}{% endblock %}{% block contenido %}
+<h1>{{ p.nombre }} <span class="tag">{{ p.estado.value }}</span></h1>
+<p class="muted">{{ p.contacto or '' }} · {{ p.origen or '' }} · Intereses: {{ p.intereses or '—' }}</p>
+<h2>Conversación</h2>
+{% for i in p.interacciones %}<div class="card" style="margin-bottom:8px;{{ 'margin-left:40px' if i.direccion=='saliente' }}">
+<span class="small muted">{{ i.fecha.strftime('%d/%m %H:%M') }} · {{ 'Cliente' if i.direccion=='entrante' else 'Tú' }}{{ ' · borrador IA' if i.borrador_ia }}</span>
+{% if i.direccion=='saliente' and not i.aprobado %}<form method="post" action="/prospectos/{{ p.id }}/interacciones/{{ i.id }}/aprobar"><textarea name="texto">{{ i.texto }}</textarea><button>Aprobar (lo envío yo)</button></form>
+{% else %}<pre>{{ i.texto }}</pre>{% endif %}</div>{% else %}<p class="muted">Sin mensajes.</p>{% endfor %}
+<div class="card"><form method="post" action="/prospectos/{{ p.id }}/pregunta"><label>Pega la pregunta que te hizo el cliente</label><textarea name="texto" required></textarea><button>Preparar respuesta</button></form></div>
+<h2>Seguimiento</h2><div class="card"><form method="post" action="/prospectos/{{ p.id }}/editar"><div class="row">
+<div><label>Estado</label><select name="estado">{% for e in estados %}<option {{ 'selected' if p.estado.value==e }}>{{ e }}</option>{% endfor %}</select></div>
+<div><label>Próximo seguimiento</label><input type="date" name="proximo_seguimiento" value="{{ p.proximo_seguimiento.isoformat() if p.proximo_seguimiento else '' }}"></div></div>
+<label>Notas</label><textarea name="notas">{{ p.notas or '' }}</textarea><button>Guardar</button></form></div>
+{% endblock %}
